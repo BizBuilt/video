@@ -1,0 +1,20 @@
+{
+  "name": "video",
+  "version": "0.0.0",
+  "homepage": "https://github.com/BizBuilt/video",
+  "authors": [
+    "Kirk Strobeck <kirk@strobeck.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "mobile-detect": "hgoebl/mobile-detect.js#~0.4.3",
+    "jquery": "~2.1.3"
+  }
+}

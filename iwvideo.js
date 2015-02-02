@@ -2,6 +2,7 @@ $(function () {
   'use strict';
 
   var button = $('#ctaVideo');
+  var md = new MobileDetect(window.navigator.userAgent);
 
   // Set up defaults
   var jwsettings = {
@@ -15,96 +16,98 @@ $(function () {
     repeat: true
   };
 
-  var loadAndPlayLobbyVideo = function () {
-    var deferred = Q.defer();
+  var coverInstance = $('#videoRevealCover');
 
-    // Wait a few seconds before loading the lobby video
-    setTimeout(function () {
+  var cover = {
+    hide: function () {
+      console.log('cover:hide');
+      coverInstance.hide();
+    },
+    show: function () {
+      console.log('cover:show');
+      coverInstance.fadeIn(1000, function () {
+        console.log('in');
+      });
+    }
+  }
 
+  var reveal = {
+    load: function () {
+      console.log('reveal:load');
+      var deferred = Q.defer();
+      // Wait a few seconds, because the browser tries to do too much at once
+      setTimeout(function () {
+        // Load reveal video - will be shown when action is taken
+        if (md.mobile()) {
+          jwsettings = {};
+        }
+        jwsettings.playlist = '//content.jwplatform.com/feed/8XABftQB.rss';
+        jwsettings.autostart = 'false';
+        jwsettings.repeat = 'false';
+        jwplayer('videoReveal').setup(jwsettings);
+      }, 1000);
+      return deferred.promise;
+    },
+    play: function () {
+      console.log('reveal:play');
+      var deferred = Q.defer();
+      jwplayer('videoReveal').play();
+      jwplayer('videoReveal').onBuffer(function () {
+        setTimeout(function () {
+          deferred.resolve();
+        }, 500)
+      });
+      return deferred.promise;
+    }
+  }
+
+  var lobby = {
+    hide: function () {
+      console.log('lobby:hide');
+      var deferred = Q.defer();
+      setTimeout(function () {
+        button.fadeOut(500);
+        $('#videoLobby').fadeOut(750, function () {
+          deferred.resolve();
+        });
+      }, 1000);
+      return deferred.promise;
+    },
+    loadAndPlay: function () {
+      console.log('lobby:loadAndPlay');
+      var deferred = Q.defer();
       // Load lobby video - before action is taken
       jwsettings.playlist = '//content.jwplatform.com/feed/trgRuzuX.rss';
       jwplayer('videoLobby').setup(jwsettings);
-
       // When the lobby video is playing, we can introduce the load overhead
       // of the second video. This will just get the video ready
       jwplayer('videoLobby').onBuffer(function () {
         deferred.resolve();
       });
-    });
-
-    return deferred.promise;
-  };
-
-  var revealTheLobbyVideo = function () {
-    var deferred = Q.defer();
-
-    // Reveal the video when the dust settles
-    setTimeout(function () {
-      deferred.resolve();
-      $('.container-video').animate({
-        opacity: 1
-      }, 1000);
-    }, 1000);
-
-    return deferred.promise;
-  };
-
-  var loadRevealVideo = function () {
-    var deferred = Q.defer();
-
-    // Wait a few seconds, because the browser tries to do too much at once
-    setTimeout(function () {
-
-      // Load reveal video - will be shown when action is taken
-      jwsettings.playlist = '//content.jwplatform.com/feed/8XABftQB.rss';
-      jwsettings.autostart = 'false';
-      jwsettings.repeat = 'false';
-      jwplayer('videoReveal').setup(jwsettings);
-
-      // We can show the CTA button when ready
-      jwplayer('videoReveal').onReady(function () {
+      return deferred.promise;
+    },
+    pause: function () {
+      console.log('lobby:pause');
+      jwplayer('videoLobby').pause();
+      return true;
+    },
+    play: function () {
+      console.log('lobby:play');
+      jwplayer('videoLobby').play();
+      return true;
+    },
+    show: function () {
+      console.log('lobby:show');
+      var deferred = Q.defer();
+      // Reveal the video when the dust settles
+      setTimeout(function () {
         deferred.resolve();
-        button.animate({
+        $('.container-video').animate({
           opacity: 1
-        }, 1000);
-      });
-    }, 1000);
-
-    return deferred.promise;
-  };
-
-  var playRevealVideo = function () {
-    var deferred = Q.defer();
-
-    jwplayer('videoReveal').play();
-    jwplayer('videoReveal').onBuffer(function () {
-      deferred.resolve();
-    });
-
-    return deferred.promise;
-  }
-
-  var fadeLobby = function () {
-    var deferred = Q.defer();
-
-    setTimeout(function () {
-      button.fadeOut(1500);
-      $('#videoLobby').fadeOut(1000, function () {
-        deferred.resolve();
-      });
-    }, 1000);
-
-    return deferred.promise;
-  };
-
-  var pauseLobbyVideo = function () {
-    jwplayer('videoLobby').pause();
-    return true;
-  };
-
-  var playLobbyVideo = function () {
-    jwplayer('videoLobby').play();
-    return true;
+        }, 500);
+      }, 500);
+      return deferred.promise;
+    }
   };
 
   var cueFadeOut = function () {
@@ -145,21 +148,32 @@ $(function () {
 
   // Click action
   button.bind('click', function () {
-    playRevealVideo()
-      .then(fadeLobby)
-      .then(pauseLobbyVideo)
-      .then(cueFadeOut)
-      .then(fadeOutRevealVideoAndPause)
-      .then(playLobbyVideo)
-      .done();
+
+    if (!md.mobile()) {
+      lobby.hide()
+        .then(cover.show)
+    } else {
+      lobby.hide()
+        .then(lobby.pause)
+        .then(reveal.play)
+        .then(cover.hide)
+    }
+    // .then(cueFadeOut)
+    // .then(fadeOutRevealVideoAndPause)
+    // .then(playLobbyVideo)
+    // .done();
   });
 
   // Init
   (function () {
     // Get user in ready state
-    loadAndPlayLobbyVideo()
-      .then(revealTheLobbyVideo)
-      .then(loadRevealVideo)
-      .done();
+    if (md.mobile()) {
+      console.log(md.mobile());
+      console.log(434343);
+      lobby.loadAndPlay()
+        .then(lobby.show)
+        .then(reveal.load)
+        .done();
+    }
   })();
 });

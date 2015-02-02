@@ -2,24 +2,26 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Infowrap</title>
-    <script src='jquery.js'></script>
+    <script src='bower_components/jquery/dist/jquery.js'></script>
     <script src="q.js"></script>
-    <script src="https://jwpsrv.com/library/Njqk0KZCEeSPtBJtO5t17w.js"></script>
+    <script src="bower_components/mobile-detect/mobile-detect.js"></script>
+    <script src="//jwpsrv.com/library/Njqk0KZCEeSPtBJtO5t17w.js"></script>
     <script src='iwvideo.js'></script>
     <link rel="stylesheet" href="app.css">
   </head>
   <body>
     <div class="theatre">
+      <div class="container-button">
+        <div
+          class="button"
+          id="ctaVideo"
+          >Infowrap in 30 seconds &rarr;</div>
+      </div>
       <div class="container-video">
         <div id="videoLobby"></div>
-        <div class="container-button">
-          <div
-            class="button"
-            id="ctaVideo"
-            >Infowrap in 30 seconds &rarr;</div>
-        </div>
         <div id="videoReveal"></div>
       </div>
+      <div id="videoRevealCover"></div>
       <img
         class="pusher"
         src="data:image/gif;base64,R0lGODlhEAAJAPAAAP///wAAACH5BAEAAAAALAAAAAAQAAkAAAJsIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCADs="
