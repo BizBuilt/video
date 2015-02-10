@@ -37,6 +37,5 @@
   },
   "_source": "git://github.com/hgoebl/mobile-detect.js.git",
   "_target": "~0.4.3",
-  "_originalSource": "hgoebl/mobile-detect.js",
-  "_direct": true
+  "_originalSource": "hgoebl/mobile-detect.js"
 }
