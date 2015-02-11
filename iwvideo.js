@@ -17,6 +17,7 @@ $(function () {
   var reveal = {};
   var containerVideo = {};
   var lobby = {};
+  var videoRevealInstance = jwplayer('videoReveal');
 
   // JW Player defaults
   var jwDefaults = {
@@ -52,11 +53,12 @@ $(function () {
 
   containerVideo.hide = function () {
     console.log('containerVideo:hide');
-    containerVideoInstance.hide();
+    containerVideoInstance.animate({
+      opacity: 0
+    }, animationDefaultMs);
   };
   containerVideo.show = function () {
     console.log('containerVideo:show');
-    containerVideoInstance.css('opacity', 1);
     containerVideoInstance.animate({
       opacity: 1
     }, animationDefaultMs);
@@ -105,8 +107,9 @@ $(function () {
       console.log('reveal:load:loading');
       // Load reveal video - will be shown when action is taken
       jwSettings.playlist = '//content.jwplatform.com/feed/8XABftQB.rss';
-      jwplayer('videoReveal').setup(jwSettings);
-      jwplayer('videoReveal').onReady(function () {
+      console.log(videoRevealInstance);
+      videoRevealInstance.setup(jwSettings);
+      videoRevealInstance.onReady(function () {
         console.log('reveal:load:ready');
         reveal.status = 'loaded';
         deferred.resolve();
@@ -117,14 +120,17 @@ $(function () {
   reveal.play = function () {
     console.log('reveal:play');
     var deferred = Q.defer();
-    jwplayer('videoReveal').play();
-    jwplayer('videoReveal').onBuffer(function () {
-      setTimeout(function () {
-        deferred.resolve();
-      }, 500);
+    videoRevealInstance.onBuffer(function () {
+      console.log('trying to play');
+      videoRevealInstance.play(true);
     });
+    videoRevealInstance.play(true);
     return deferred.promise;
   };
+
+  videoRevealInstance.onBufferChange(function () {
+    console.log('BUFFER: ' + videoRevealInstance.getBuffer());
+  });
 
   // ---
 
@@ -183,24 +189,30 @@ $(function () {
 
   var transitionToLobby = function () {
     var deferred = Q.defer();
-    jwplayer('videoReveal').onComplete(function () {
-      // jwplayer('videoReveal').stop(); // TODO: should not be needed
+    videoRevealInstance.onComplete(function () {
+      console.log('transitionToLobby:videoComplete');
       if (!bowser.mobile) {
         jwplayer('videoLobby').seek(0);
       }
       containerVideo.show();
       ctaButton.show();
       setTimeout(function () {
+
+        var resetRevealVideo = function () {
+          videoRevealInstance.seek(0); // reset for second play
+          videoRevealInstance.pause();
+          deferred.resolve();
+        };
+
         if (!bowser.mobile) {
           $('#videoLobby').fadeIn(animationDefaultMs, function () {
             if (!bowser.mobile) {
               jwplayer('videoLobby').play();
             }
-            jwplayer('videoReveal').seek(0); // reset for second play
-            deferred.resolve();
+            resetRevealVideo();
           });
         } else {
-          jwplayer('videoReveal').seek(0); // reset for second play
+          resetRevealVideo();
         }
       }, 500);
     });
@@ -208,6 +220,15 @@ $(function () {
   };
 
   // ---
+
+  videoRevealInstance.onSetupError(function () {
+    console.log('ERROR: ' + arguments);
+  });
+
+  console.log('demo', videoRevealInstance);
+  setInterval(function () {
+    console.log('STATE: ' + videoRevealInstance.getState());
+  }, 250);
 
   // Click action
 
@@ -227,11 +248,16 @@ $(function () {
 
     var allowTransitionToReveal = function () {
       if (bowser.mobile) {
+        console.log('start mobile');
         lobby.hide()
           .then(containerVideo.show)
           .then(reveal.play)
+          .then(function () {
+            console.log('what??')
+          })
           .then(ctaButton.enable)
           .then(transitionToLobby)
+          .then(containerVideo.hide)
           .done();
         //.then(cover.hide)
       } else {
