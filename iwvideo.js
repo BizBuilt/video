@@ -6,18 +6,8 @@ $(function () {
    *
    * - Embed options: http://cl.ly/Zhz6
    * - JS reference: http://cl.ly/ZhNc
+   *
    */
-
-  var ctaButtonInstance = $('#ctaVideo');
-  var containerVideoInstance = $('.container-video');
-  var coverInstance = $('#videoRevealCover');
-  var animationDefaultMs;
-  var jwSettings;
-  var cover = {};
-  var reveal = {};
-  var containerVideo = {};
-  var lobby = {};
-  var videoRevealInstance = jwplayer('videoReveal');
 
   // JW Player defaults
   var jwDefaults = {
@@ -26,12 +16,12 @@ $(function () {
       displaytitle: false,
       height: '100%',
       primary: 'html5',
-      width: '100%',
+      width: '100%'
     },
     desktop: {
       autostart: true,
       controls: 'false',
-      primary: 'html5',
+      primary: 'html5'
     },
     mobile: {
       repeat: 'false'
@@ -41,252 +31,378 @@ $(function () {
   jwDefaults.mobile = _.extend({}, jwDefaults.mobile, jwDefaults.both);
   jwDefaults.desktop = _.extend({}, jwDefaults.desktop, jwDefaults.both);
 
+  var jwSettings;
+  var animationDefaultMs = 1000;
   if (bowser.mobile) {
-    animationDefaultMs = 0;
     jwSettings = jwDefaults.mobile;
   } else {
-    animationDefaultMs = 1000;
     jwSettings = jwDefaults.desktop;
   }
 
-  // ---
-
-  containerVideo.hide = function () {
-    console.log('containerVideo:hide');
-    containerVideoInstance.animate({
-      opacity: 0
-    }, animationDefaultMs);
-  };
-  containerVideo.show = function () {
-    console.log('containerVideo:show');
-    containerVideoInstance.animate({
-      opacity: 1
-    }, animationDefaultMs);
-  };
-
-  // ---
-
-  cover.hide = function () {
-    console.log('cover:hide');
-    coverInstance.hide();
-  };
-  cover.show = function () {
-    console.log('cover:show');
-    coverInstance.fadeIn(animationDefaultMs, function () {
-      console.log('cover:show:complete');
-    });
-  };
-
-  // ---
-
-  var ctaButton = {};
-  ctaButton.clicked = false;
-  ctaButton.disable = function () {
-    ctaButton.clicked = true;
-  };
-  ctaButton.enable = function () {
-    ctaButton.clicked = false;
-  };
-  ctaButton.hide = function () {
-    ctaButtonInstance.fadeOut(animationDefaultMs * 0.5);
-  };
-  ctaButton.show = function () {
-    ctaButtonInstance.fadeIn(animationDefaultMs * 0.5);
-  };
-
-  // ---
-
-  reveal.status = null;
-  reveal.load = function () {
-    console.log('reveal:load');
-    reveal.status = 'loading';
-    console.log('reveal:load:waiting');
-    var deferred = Q.defer();
-    // Wait a little bit, because the browser tries to do too much at once
-    setTimeout(function () {
-      console.log('reveal:load:loading');
-      // Load reveal video - will be shown when action is taken
-      jwSettings.playlist = '//content.jwplatform.com/feed/8XABftQB.rss';
-      console.log(videoRevealInstance);
-      videoRevealInstance.setup(jwSettings);
-      videoRevealInstance.onReady(function () {
-        console.log('reveal:load:ready');
-        reveal.status = 'loaded';
+  var button = function () {
+    var api = {};
+    api.clicked = false;
+    api.disable = function () {
+      console.log('button:disable');
+      api.clicked = true;
+    };
+    api.enable = function () {
+      console.log('button:enable');
+      api.clicked = false;
+    };
+    api.fadeOut = function () {
+      console.log('button:fadeOut');
+      var deferred = Q.defer();
+      api.instance.animate({
+        opacity: 0
+      }, animationDefaultMs, function () {
+        console.log('button:fadeOut:complete');
         deferred.resolve();
       });
-    }, 500);
-    return deferred.promise;
-  };
-  reveal.play = function () {
-    console.log('reveal:play');
-    var deferred = Q.defer();
-    videoRevealInstance.onBuffer(function () {
-      console.log('trying to play');
-      videoRevealInstance.play(true);
-    });
-    videoRevealInstance.play(true);
-    return deferred.promise;
-  };
-
-  videoRevealInstance.onBufferChange(function () {
-    console.log('BUFFER: ' + videoRevealInstance.getBuffer());
-  });
-
-  // ---
-
-  lobby.hide = function () {
-    console.log('lobby:hide');
-    var deferred = Q.defer();
-    setTimeout(function () {
-      ctaButton.hide();
-      $('#videoLobby').fadeOut(
-        animationDefaultMs * 0.75,
-        function () {
-          deferred.resolve();
-        });
-    }, animationDefaultMs);
-    return deferred.promise;
-  };
-  lobby.loadAndPlay = function () {
-    console.log('lobby:loadAndPlay');
-    var deferred = Q.defer();
-    // Load lobby video - before action is taken
-    var settings = {
-      mute: true,
-      playlist: '//content.jwplatform.com/feed/trgRuzuX.rss',
-      repeat: true
+      return deferred.promise;
     };
-    jwplayer('videoLobby').setup(_.extend({}, jwSettings, settings));
-    // When the lobby video is playing, we can introduce the load overhead
-    // of the second video. This will just get the video ready
-    jwplayer('videoLobby').onBuffer(function () {
-      deferred.resolve();
-    });
-    return deferred.promise;
-  };
-  lobby.pause = function () {
-    console.log('lobby:pause');
-    jwplayer('videoLobby').pause();
-    return true;
-  };
-  lobby.play = function () {
-    console.log('lobby:play');
-    jwplayer('videoLobby').play();
-    return true;
-  };
-  lobby.show = function () {
-    console.log('lobby:show');
-    var deferred = Q.defer();
-    // Reveal the video when the dust settles
-    setTimeout(function () {
-      deferred.resolve();
-      containerVideo.show();
-    }, 500);
-    return deferred.promise;
-  };
+    api.fadeIn = function () {
+      console.log('button:fadeOut');
+      var deferred = Q.defer();
+      api.instance.animate({
+        opacity: 1
+      }, animationDefaultMs, function () {
+        console.log('button:fadeOut:complete');
+        deferred.resolve();
+      });
+      return deferred.promise;
+    };
+    api.hide = function () {
+      console.log('button:hide');
+      //api.instance.fadeOut(animationDefaultMs * 0.5);
+      api.instance.hide();
+    };
+    api.instance = $('#ctaVideo');
+    api.show = function () {
+      console.log('button:show');
+      //api.instance.fadeIn(animationDefaultMs * 0.5);
+      api.instance.show();
+    };
+    return api;
+  }();
 
-  // ---
+  var lobbyCover = function () {
+    var api = {};
+    api.fadeIn = function () {
+      console.log('lobbyCover:fadeIn');
+      var deferred = Q.defer();
+      api.instance.animate({
+        opacity: 1
+      }, animationDefaultMs, function () {
+        console.log('lobbyCover:fadeIn:complete');
+        deferred.resolve();
+      });
+      return deferred.promise;
+    };
+    api.fadeOut = function () {
+      console.log('lobbyCover:fadeOut');
+      var deferred = Q.defer();
+      api.instance.animate({
+        opacity: 0
+      }, animationDefaultMs, function () {
+        console.log('lobbyCover:fadeOut:complete');
+        deferred.resolve();
+      });
+      return deferred.promise;
+    };
+    api.hide = function () {
+      api.instance.hide();
+    };
+    api.instance = $('#videoLobbyCover');
+    api.show = function () {
+      api.instance.show();
+    };
+    return api;
+  }();
 
-  var transitionToLobby = function () {
-    var deferred = Q.defer();
-    videoRevealInstance.onComplete(function () {
-      console.log('transitionToLobby:videoComplete');
-      if (!bowser.mobile) {
-        jwplayer('videoLobby').seek(0);
-      }
-      containerVideo.show();
-      ctaButton.show();
-      setTimeout(function () {
-
-        var resetRevealVideo = function () {
-          videoRevealInstance.seek(0); // reset for second play
-          videoRevealInstance.pause();
-          deferred.resolve();
+  var presentation = function () {
+    var api = {};
+    api.afterLoad = function () {
+      jwplayer('videoPresentation').onComplete(function () {
+        console.log('transitionToLobby:videoComplete');
+        if (!bowser.mobile) {
+          lobby.video.seek(0);
+        }
+        button.show();
+        //setTimeout(function () {
+        var resetPresentationVideo = function () {
+          jwplayer('videoPresentation').seek(0); // reset for second play
+          jwplayer('videoPresentation').pause();
         };
-
         if (!bowser.mobile) {
           $('#videoLobby').fadeIn(animationDefaultMs, function () {
             if (!bowser.mobile) {
-              jwplayer('videoLobby').play();
+              jwplayer('videoLobby').play(true);
             }
-            resetRevealVideo();
+            resetPresentationVideo();
           });
         } else {
-          resetRevealVideo();
+          resetPresentationVideo();
         }
+        //}, 500);
+      });
+      jwplayer('videoPresentation').onSetupError(function () {
+        console.log('ERROR: ' + arguments);
+      });
+    };
+    api.hide = function () {
+      console.log('presentation:hide');
+      api.instance.css('z-index', -100);
+    };
+    api.instance = $('#videoPresentation');
+    api.load = function () {
+      console.log('presentation:load');
+      var deferred = Q.defer();
+      jwplayer('videoPresentation').setup(_.extend({}, jwSettings, {
+        autostart: false,
+        playlist: '//content.jwplatform.com/feed/8XABftQB.rss',
+      }));
+      jwplayer('videoPresentation').onReady(function () {
+        console.log('presentation:load:ready');
+        api.setInstance();
+        deferred.resolve();
+      });
+      // }, 500);
+      return deferred.promise;
+    };
+    api.play = function () {
+      console.log('presentation:play');
+      var deferred = Q.defer();
+      jwplayer('videoPresentation').play(true);
+      var interval = setInterval(function () {
+        if (jwplayer('videoPresentation').getState() === 'PLAYING') {
+          console.log('presentation:play:complete');
+          clearInterval(interval);
+          deferred.resolve();
+        }
+      }, 100);
+      return deferred.promise;
+    };
+    api.setInstance = function () {
+      api.instance = $('#videoPresentation');
+    };
+    api.show = function () {
+      api.setInstance();
+      console.log('presentation:show');
+      api.instance.css('z-index', 0);
+    };
+    api.video = jwplayer('videoPresentation');
+    api.waitUntilFinishedPlaying = function () {
+      console.log('presentation:waitUntilFinishedPlaying');
+      var deferred = Q.defer();
+      var duration = jwplayer('videoPresentation').getDuration();
+      var position = 0;
+      var interval = setInterval(function () {
+        position = jwplayer('videoPresentation').getPosition();
+        if (
+          jwplayer('videoPresentation').getState() === 'IDLE' ||
+          position + 2 >= duration
+        ) {
+          console.log('presentation:waitUntilFinishedPlaying:complete');
+          clearInterval(interval);
+          deferred.resolve();
+        }
+      }, 100);
+      return deferred.promise;
+    };
+    return api;
+  }();
+
+  var presentationCover = function () {
+    var api = {};
+    api.fadeIn = function () {
+      console.log('presentationCover:fadeIn');
+      var deferred = Q.defer();
+      api.instance.animate({
+        opacity: 1
+      }, animationDefaultMs, function () {
+        console.log('presentationCover:fadeIn:complete');
+        deferred.resolve();
+      });
+      return deferred.promise;
+    };
+    api.fadeOut = function () {
+      console.log('presentationCover:fadeOut');
+      var deferred = Q.defer();
+      api.instance.animate({
+        opacity: 0
+      }, animationDefaultMs, function () {
+        console.log('presentationCover:fadeOut:complete');
+        deferred.resolve();
+      });
+      return deferred.promise;
+    };
+    api.hide = function () {
+      api.instance.hide();
+    };
+    api.instance = $('#videoPresentationCover');
+    api.show = function () {
+      api.instance.show();
+    };
+    return api;
+  }();
+
+  var lobby = function () {
+    var api = {};
+    api.fadeIn = function () {
+      console.log('lobby:fadeIn');
+      api.instance.css('opacity', 0);
+      var deferred = Q.defer();
+      api.instance.animate({
+        opacity: 1
+      }, animationDefaultMs, function () {
+        console.log('lobby:fadeIn:complete');
+        deferred.resolve();
+      });
+      return deferred.promise;
+    };
+    api.hide = function () {
+      api.instance.css('opacity', 0);
+    };
+    api.hideWhenStylesSet = function () {
+      console.log('lobby:hideWhenStylesSet');
+      var deferred = Q.defer();
+      var interval = setInterval(function () {
+        if (api.instance.hasClass('jwplayer')) {
+          console.log('lobby:hideWhenStylesSet:complete');
+          api.hide();
+          clearInterval(interval);
+          deferred.resolve();
+        }
+      }, 100);
+      return deferred.promise;
+    };
+    api.instance = $('#videoLobby');
+    api.load = function () {
+      console.log('lobby:load');
+      var deferred = Q.defer();
+      jwplayer('videoLobby').setup(_.extend({}, jwSettings, {
+        mute: true,
+        playlist: '//content.jwplatform.com/feed/trgRuzuX.rss',
+        repeat: true
+      }));
+      jwplayer('videoLobby').onReady(function () {
+        console.log('lobby:load:ready');
+        api.setInstance();
+        deferred.resolve();
+      });
+      return deferred.promise;
+    };
+    api.pause = function () {
+      console.log('lobby:pause');
+      jwplayer('videoLobby').pause();
+    };
+    api.play = function () {
+      console.log('lobby:play');
+      var deferred = Q.defer();
+      jwplayer('videoLobby').play(true);
+      var interval = setInterval(function () {
+        if (jwplayer('videoLobby').getState() === 'PLAYING') {
+          console.log('lobby:play:complete');
+          clearInterval(interval);
+          deferred.resolve();
+        }
+      }, 100);
+      return deferred.promise;
+    };
+    api.setInstance = function () {
+      api.instance = $('#videoLobby');
+    };
+    api.show = function () {
+      console.log('lobby:show');
+      api.instance.show();
+    };
+    api.stop = function () {
+      console.log('lobby:stop');
+      jwplayer('videoLobby').seek(0);
+      jwplayer('videoLobby').pause();
+    };
+    api.wait = function () {
+      console.log('lobby:wait');
+      var deferred = Q.defer();
+      setTimeout(function () {
+        deferred.resolve();
       }, 500);
-    });
-    return deferred.promise;
-  };
-
-  // ---
-
-  videoRevealInstance.onSetupError(function () {
-    console.log('ERROR: ' + arguments);
-  });
-
-  console.log('demo', videoRevealInstance);
-  setInterval(function () {
-    console.log('STATE: ' + videoRevealInstance.getState());
-  }, 250);
+      return deferred.promise;
+    };
+    return api;
+  }();
 
   // Click action
 
-  ctaButtonInstance.bind('click', function () {
-    ctaButton.disable();
-    var waitUntilLoaded = function () {
-      console.log('waitUntilLoaded');
-      var deferred = Q.defer();
-      var checker = setInterval(function () {
-        if (reveal.status === 'loaded') {
-          clearInterval(checker);
-          deferred.resolve();
-        }
-      }, 250);
-      return deferred.promise;
-    };
+  button.instance.bind('click', function () {
 
-    var allowTransitionToReveal = function () {
-      if (bowser.mobile) {
-        console.log('start mobile');
-        lobby.hide()
-          .then(containerVideo.show)
-          .then(reveal.play)
-          .then(function () {
-            console.log('what??')
-          })
-          .then(ctaButton.enable)
-          .then(transitionToLobby)
-          .then(containerVideo.hide)
-          .done();
-        //.then(cover.hide)
-      } else {
-        lobby.hide()
-          .then(lobby.pause)
-          .then(reveal.play)
-          .then(cover.hide)
-          .then(ctaButton.enable)
-          .done();
-        // .then(cueFadeOut)
-        // .then(transitionToLobby)
-        // .then(playLobbyVideo)
-      }
-    };
+    button.disable();
 
-    waitUntilLoaded()
-      .then(allowTransitionToReveal);
+    if (bowser.mobile) {
+      lobby.hide()
+        .then(presentation.play)
+        .then(function () {
+          console.log('what??');
+        })
+        .then(button.enable)
+        .done();
+    } else {
+      presentation.load()
+        .then(function () {
+          return Q.allSettled([
+            button.fadeOut(),
+            presentationCover.fadeIn(),
+            presentation.play()
+          ]);
+        })
+        .then(function () {
+          return Q.allSettled([
+            lobby.stop(),
+            presentation.show()
+            //button.fadeOut(),
+            //presentationCover.fadeIn(),
+            //presentation.play()
+          ]);
+        })
+        .then(presentationCover.fadeOut)
+        .then(presentation.waitUntilFinishedPlaying)
+        .then(presentationCover.fadeIn)
+        .then(lobby.play)
+        .then(function () {
+          return Q.allSettled([
+            presentationCover.fadeOut(),
+            lobby.play(),
+            button.fadeIn(),
+            presentation.hide()
+            //presentationCover.fadeIn(),
+            //presentation.play()
+          ]);
+        })
+        .done();
+    }
   });
+
+  var wait = function () {
+    console.log('wait');
+    var deferred = Q.defer();
+    setTimeout(function () {
+      deferred.resolve();
+    }, 500);
+    return deferred.promise;
+  };
 
   // Init
   (function () {
     // Get user in ready state
     if (bowser.mobile) {
-      reveal.load()
+      presentation.load()
         .done();
     } else {
-      lobby.loadAndPlay()
-        .then(lobby.show)
-        .then(reveal.load)
+      lobby.load()
+        .then(lobby.play)
+        .then(wait) // this hides a loading flicker from jw
+      .then(lobbyCover.fadeOut)
         .done();
     }
   })();

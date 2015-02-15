@@ -31,10 +31,10 @@ $(function () {
     return deferred.promise;
   };
 
-  var revealTheLobbyVideo = function () {
+  var presentationTheLobbyVideo = function () {
     var deferred = Q.defer();
 
-    // Reveal the video when the dust settles
+    // Presentation the video when the dust settles
     setTimeout(function () {
       deferred.resolve();
       $('.container-video').animate({
@@ -45,27 +45,27 @@ $(function () {
     return deferred.promise;
   };
 
-  var loadRevealVideo = function () {
+  var loadPresentationVideo = function () {
     var deferred = Q.defer();
 
     // Wait a few seconds, because the browser tries to do too much at once
     setTimeout(function () {
 
-      // Load reveal video - will be shown when action is taken
+      // Load presentation video - will be shown when action is taken
       jwsettings.playlist = '//content.jwplatform.com/feed/8XABftQB.rss';
       jwsettings.autostart = 'false';
       jwsettings.repeat = 'false';
-      jwplayer('videoReveal').setup(jwsettings);
+      jwplayer('videoPresentation').setup(jwsettings);
     }, 1000);
 
     return deferred.promise;
   };
 
-  var playRevealVideo = function () {
+  var playPresentationVideo = function () {
     var deferred = Q.defer();
 
-    jwplayer('videoReveal').play();
-    jwplayer('videoReveal').onBuffer(function () {
+    jwplayer('videoPresentation').play();
+    jwplayer('videoPresentation').onBuffer(function () {
       deferred.resolve();
     });
 
@@ -99,11 +99,11 @@ $(function () {
     var deferred = Q.defer();
 
     setInterval(function () {
-      jwplayer('videoReveal').onTime(function (data) {
+      jwplayer('videoPresentation').onTime(function (data) {
         console.log(data.position, data.duration);
         if (data.position > data.duration - 1) {
           console.log('go');
-          jwplayer('videoReveal').pause();
+          jwplayer('videoPresentation').pause();
           deferred.resolve();
         }
       });
@@ -112,7 +112,7 @@ $(function () {
     return deferred.promise;
   };
 
-  var fadeOutRevealVideoAndPause = function () {
+  var fadeOutPresentationVideoAndPause = function () {
     var deferred = Q.defer();
 
     jwplayer('videoLobby').seek(0);
@@ -120,7 +120,7 @@ $(function () {
     var interval = setTimeout(function () {
       $('#videoLobby').fadeIn(1000, function () {
         jwplayer('videoLobby').play();
-        jwplayer('videoReveal').seek(0);
+        jwplayer('videoPresentation').seek(0);
         clearInterval(interval);
         deferred.resolve();
       });
@@ -133,11 +133,11 @@ $(function () {
 
   // Click action
   button.bind('click', function () {
-    playRevealVideo()
+    playPresentationVideo()
       .then(fadeLobby)
       .then(pauseLobbyVideo)
       .then(cueFadeOut)
-      .then(fadeOutRevealVideoAndPause)
+      .then(fadeOutPresentationVideoAndPause)
       .then(playLobbyVideo)
       .done();
   });
@@ -146,8 +146,8 @@ $(function () {
   (function () {
     // Get user in ready state
     loadAndPlayLobbyVideo()
-      .then(revealTheLobbyVideo)
-      .then(loadRevealVideo)
+      .then(presentationTheLobbyVideo)
+      .then(loadPresentationVideo)
       .done();
   })();
 });
