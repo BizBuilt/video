@@ -39,6 +39,15 @@ $(function () {
     jwSettings = jwDefaults.desktop;
   }
 
+  var wait = function () {
+    console.log('wait');
+    var deferred = Q.defer();
+    setTimeout(function () {
+      deferred.resolve();
+    }, 500);
+    return deferred.promise;
+  };
+
   var button = function () {
     var api = {};
     api.clicked = false;
@@ -74,13 +83,11 @@ $(function () {
     };
     api.hide = function () {
       console.log('button:hide');
-      //api.instance.fadeOut(animationDefaultMs * 0.5);
       api.instance.hide();
     };
     api.instance = $('#ctaVideo');
     api.show = function () {
       console.log('button:show');
-      //api.instance.fadeIn(animationDefaultMs * 0.5);
       api.instance.show();
     };
     return api;
@@ -111,11 +118,17 @@ $(function () {
       return deferred.promise;
     };
     api.hide = function () {
+      var deferred = Q.defer();
       api.instance.hide();
+      deferred.resolve();
+      return deferred.promise;
     };
     api.instance = $('#videoLobbyCover');
     api.show = function () {
+      var deferred = Q.defer();
       api.instance.show();
+      deferred.resolve();
+      return deferred.promise;
     };
     return api;
   }();
@@ -152,7 +165,11 @@ $(function () {
     };
     api.hide = function () {
       console.log('presentation:hide');
-      api.instance.css('z-index', -100);
+      var deferred = Q.defer();
+      api.setInstance();
+      api.instance.css('z-index', -150);
+      deferred.resolve();
+      return deferred.promise;
     };
     api.instance = $('#videoPresentation');
     api.load = function () {
@@ -187,8 +204,8 @@ $(function () {
       api.instance = $('#videoPresentation');
     };
     api.show = function () {
-      api.setInstance();
       console.log('presentation:show');
+      api.setInstance();
       api.instance.css('z-index', 0);
     };
     api.video = jwplayer('videoPresentation');
@@ -262,7 +279,8 @@ $(function () {
       return deferred.promise;
     };
     api.hide = function () {
-      api.instance.css('opacity', 0);
+      console.log('lobby:hide');
+      api.instance.css('z-index', -100);
     };
     api.hideWhenStylesSet = function () {
       console.log('lobby:hideWhenStylesSet');
@@ -315,7 +333,7 @@ $(function () {
     };
     api.show = function () {
       console.log('lobby:show');
-      api.instance.show();
+      api.instance.css('z-index', -10);
     };
     api.stop = function () {
       console.log('lobby:stop');
@@ -334,75 +352,62 @@ $(function () {
   }();
 
   // Click action
-
   button.instance.bind('click', function () {
-
-    button.disable();
-
-    if (bowser.mobile) {
-      lobby.hide()
-        .then(presentation.play)
-        .then(function () {
-          console.log('what??');
-        })
-        .then(button.enable)
-        .done();
-    } else {
-      presentation.load()
-        .then(function () {
-          return Q.allSettled([
-            button.fadeOut(),
-            presentationCover.fadeIn(),
-            presentation.play()
-          ]);
-        })
-        .then(function () {
-          return Q.allSettled([
-            lobby.stop(),
-            presentation.show()
-            //button.fadeOut(),
-            //presentationCover.fadeIn(),
-            //presentation.play()
-          ]);
-        })
-        .then(presentationCover.fadeOut)
-        .then(presentation.waitUntilFinishedPlaying)
-        .then(presentationCover.fadeIn)
-        .then(lobby.play)
-        .then(function () {
-          return Q.allSettled([
-            presentationCover.fadeOut(),
-            lobby.play(),
-            button.fadeIn(),
-            presentation.hide()
-            //presentationCover.fadeIn(),
-            //presentation.play()
-          ]);
-        })
-        .done();
+    if (!button.clicked) {
+      button.disable();
+      if (bowser.mobile) {
+        presentation.play()
+        // .then(presentation.play)
+        // .then(lobbyCover.hide)
+        // .then(presentation.hide)
+        // .then(presentation.show)
+        // .then(button.enable)
+        // .done();
+      } else {
+        Q.allSettled([
+          button.fadeOut(),
+          presentationCover.fadeIn()
+        ])
+          .then(presentation.load)
+          .then(presentation.play)
+          .then(function () {
+            return Q.allSettled([
+              lobby.stop(),
+              presentation.show()
+            ]);
+          })
+          .then(presentationCover.fadeOut)
+          .then(presentation.waitUntilFinishedPlaying)
+          .then(presentationCover.fadeIn)
+          .then(function () {
+            return Q.allSettled([
+              presentation.hide(),
+              lobby.play()
+            ]);
+          })
+          .then(button.enable)
+          .then(function () {
+            return Q.allSettled([
+              presentationCover.fadeOut(),
+              button.fadeIn(),
+              presentation.hide()
+            ]);
+          })
+          .done();
+      }
     }
   });
 
-  var wait = function () {
-    console.log('wait');
-    var deferred = Q.defer();
-    setTimeout(function () {
-      deferred.resolve();
-    }, 500);
-    return deferred.promise;
-  };
-
   // Init
   (function () {
-    // Get user in ready state
     if (bowser.mobile) {
       presentation.load()
         .done();
     } else {
       lobby.load()
         .then(lobby.play)
-        .then(wait) // this hides a loading flicker from jw
-      .then(lobbyCover.fadeOut)
+        .then(wait)
+        .then(lobbyCover.fadeOut)
         .done();
     }
   })();
