@@ -1,6 +1,7 @@
 $(function () {
   'use strict';
 
+  console.log('-----------------------------');
   /*
    * JW Player
    *
@@ -32,7 +33,7 @@ $(function () {
   jwDefaults.desktop = _.extend({}, jwDefaults.desktop, jwDefaults.both);
 
   var jwSettings;
-  var animationDefaultMs = 1000;
+  var animationDefaultMs = 500;
   if (bowser.mobile) {
     jwSettings = jwDefaults.mobile;
   } else {
@@ -93,6 +94,43 @@ $(function () {
     return api;
   }();
 
+  var buttonClose = function () {
+    var api = {};
+    api.clicked = null;
+    api.disable = function () {
+      var deferred = Q.defer();
+      console.log('buttonClose:disable');
+      api.instance.css({
+        'z-index': 10
+      });
+      deferred.resolve();
+      return deferred.promise;
+    };
+    api.enable = function () {
+      console.log('buttonClose:enable');
+      api.instance.css({
+        'z-index': 100
+      });
+    };
+    api.hide = function () {
+      console.log('buttonClose:hide');
+      api.instance.css({
+        opacity: 0,
+        'z-index': -100
+      });
+    };
+    api.instance = $('#buttonClose');
+    api.show = function () {
+      console.log('buttonClose:show');
+      api.instance.show();
+      api.instance.css({
+        opacity: 1,
+        'z-index': 10
+      });
+    };
+    return api;
+  }();
+
   var lobbyCover = function () {
     var api = {};
     api.fadeIn = function () {
@@ -118,6 +156,7 @@ $(function () {
       return deferred.promise;
     };
     api.hide = function () {
+      console.log('lobbyCover:hide');
       var deferred = Q.defer();
       api.instance.hide();
       deferred.resolve();
@@ -192,7 +231,8 @@ $(function () {
       var deferred = Q.defer();
       jwplayer('videoPresentation').play(true);
       var interval = setInterval(function () {
-        if (jwplayer('videoPresentation').getState() === 'PLAYING') {
+        api.status = jwplayer('videoPresentation').getState();
+        if (api.status === 'PLAYING') {
           console.log('presentation:play:complete');
           clearInterval(interval);
           deferred.resolve();
@@ -208,21 +248,25 @@ $(function () {
       api.setInstance();
       api.instance.css('z-index', 0);
     };
+    api.status = null;
     api.video = jwplayer('videoPresentation');
+    api.interval = null;
     api.waitUntilFinishedPlaying = function () {
       console.log('presentation:waitUntilFinishedPlaying');
       var deferred = Q.defer();
       var duration = jwplayer('videoPresentation').getDuration();
       var position = 0;
-      var interval = setInterval(function () {
+      api.interval = setInterval(function () {
         position = jwplayer('videoPresentation').getPosition();
-        if (
-          jwplayer('videoPresentation').getState() === 'IDLE' ||
-          position + 2 >= duration
-        ) {
+        api.status = jwplayer('videoPresentation').getState();
+        if (api.status === 'IDLE' || position + 2 >= duration) {
           console.log('presentation:waitUntilFinishedPlaying:complete');
-          clearInterval(interval);
+          clearInterval(api.interval);
           deferred.resolve();
+        } else if (buttonClose.clicked) {
+          console.log('presentation:waitUntilFinishedPlaying:rejected');
+          clearInterval(api.interval);
+          deferred.reject();
         }
       }, 100);
       return deferred.promise;
@@ -357,43 +401,74 @@ $(function () {
       button.disable();
       if (bowser.mobile) {
         presentation.play()
+          .done();
         // .then(presentation.play)
         // .then(lobbyCover.hide)
         // .then(presentation.hide)
         // .then(presentation.show)
         // .then(button.enable)
-        // .done();
       } else {
-        Q.allSettled([
-          button.fadeOut(),
-          presentationCover.fadeIn()
-        ])
-          .then(presentation.load)
-          .then(presentation.play)
-          .then(function () {
-            return Q.allSettled([
-              lobby.stop(),
-              presentation.show()
-            ]);
-          })
-          .then(presentationCover.fadeOut)
-          .then(presentation.waitUntilFinishedPlaying)
-          .then(presentationCover.fadeIn)
-          .then(function () {
-            return Q.allSettled([
-              presentation.hide(),
-              lobby.play()
-            ]);
-          })
-          .then(button.enable)
-          .then(function () {
-            return Q.allSettled([
-              presentationCover.fadeOut(),
-              button.fadeIn(),
-              presentation.hide()
-            ]);
-          })
-          .done();
+        var exitFromPresentation = function () {
+          console.log('exitFromPresentation ------------------------');
+          return buttonClose.disable()
+            .then(presentationCover.fadeIn)
+            .then(function () {
+              buttonClose.clicked = false;
+              return Q.allSettled([
+                presentation.hide(),
+                lobby.play(),
+                buttonClose.hide()
+              ]);
+            })
+            .then(button.enable)
+            .then(function () {
+              return Q.allSettled([
+                presentationCover.fadeOut(),
+                button.fadeIn(),
+                presentation.hide()
+              ]);
+            })
+            .done();
+        };
+
+        var enterPresentation = function () {
+          console.log('enterPresentation ------------------------');
+          Q.allSettled([
+            button.fadeOut(),
+            presentationCover.fadeIn()
+          ])
+            .then(presentation.load)
+            .then(presentation.play)
+            .then(function () {
+              return Q.allSettled([
+                lobby.stop(),
+                lobby.hide(),
+                presentation.show(),
+                buttonClose.show()
+              ]);
+            })
+            .then(presentationCover.fadeOut)
+            .then(buttonClose.enable)
+            .then(presentation.waitUntilFinishedPlaying)
+            .then(function () {
+              if (!buttonClose.clicked) {
+                exitFromPresentation()
+              }
+            })
+            .done()
+        };
+
+        buttonClose.instance.bind('click', function () {
+          console.log('buttonClose:clicked');
+          if (!buttonClose.clicked) {
+            console.log('buttonClose:clicked:engage');
+            exitFromPresentation();
+            clearInterval(buttonClose.interval);
+            buttonClose.clicked = true;
+          }
+        });
+
+        enterPresentation();
       }
     }
   });
