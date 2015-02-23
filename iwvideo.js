@@ -401,15 +401,31 @@ $(function () {
       button.disable();
       if (bowser.mobile) {
         presentation.play()
+          .then(button.enable)
           .done();
-        // .then(presentation.play)
-        // .then(lobbyCover.hide)
+        // Q.allSettled([
+        //   button.hide(),
+        //   presentationCover.hide(),
+        //   lobbyCover.hide()
+        // ])
+        //   .then(presentation.load)
+        //   .then(presentation.play)
+        //   .then(presentation.show)
+        //   .then(presentation.waitUntilFinishedPlaying)
+        //   .then(function () {
+        //     return Q.allSettled([
+        //       button.show(),
+        //       presentationCover.show(),
+        //       lobbyCover.show()
+        //     ])
+        //   })
+        //   .done();
         // .then(presentation.hide)
         // .then(presentation.show)
         // .then(button.enable)
       } else {
-        var exitFromPresentation = function () {
-          console.log('exitFromPresentation ------------------------');
+        var exitPresentation = function () {
+          console.log('exitPresentation ------------------------');
           return buttonClose.disable()
             .then(presentationCover.fadeIn)
             .then(function () {
@@ -452,7 +468,7 @@ $(function () {
             .then(presentation.waitUntilFinishedPlaying)
             .then(function () {
               if (!buttonClose.clicked) {
-                exitFromPresentation()
+                exitPresentation()
               }
             })
             .done()
@@ -462,7 +478,7 @@ $(function () {
           console.log('buttonClose:clicked');
           if (!buttonClose.clicked) {
             console.log('buttonClose:clicked:engage');
-            exitFromPresentation();
+            exitPresentation();
             clearInterval(buttonClose.interval);
             buttonClose.clicked = true;
           }
